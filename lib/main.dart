@@ -1,0 +1,270 @@
+import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+import 'dart:math';
+import 'dart:convert';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData.dark(),
+      home: const MyHomePage(title: 'Forti Diff'),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({Key? key, required this.title}) : super(key: key);
+
+  final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  var common = Common();
+  var filepathCtrl1 = TextEditingController();
+  var filepathCtrl2 = TextEditingController();
+
+  var tmpMaskedFile1 = '';
+  var tmpMaskedFile2 = '';
+
+  var filepath1_ok = false;
+  var filepath2_ok = false;
+
+  bool diffButtonDisable = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Welcome to Flutter',
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.title),
+        ),
+        body: Column(children: [
+          Text('Top'),
+          Row(
+            children: [
+              Text('比較元'),
+              Flexible(
+                  child: TextField(
+                controller: filepathCtrl1,
+              )),
+              ElevatedButton(
+                  child: Text('Button'),
+                  onPressed: () async {
+                    String? filePath = await common.getPathFromDialog();
+                    print(filePath);
+                    if (filePath != null) {
+                      setState(() => filepathCtrl1.text = filePath);
+                      tmpMaskedFile1 = await common.genTempFile(filePath);
+
+                      // diff button state
+                      filepath1_ok = true;
+                      if (filepath2_ok) {
+                        diffButtonDisable = true;
+                      } else {
+                        diffButtonDisable = false;
+                      }
+                    }
+                  }),
+            ],
+          ),
+          Row(
+            children: [
+              Text('比較対象'),
+              Flexible(
+                  child: TextField(
+                controller: filepathCtrl2,
+              )),
+              ElevatedButton(
+                  child: Text('Button'),
+                  onPressed: () async {
+                    String? filePath = await common.getPathFromDialog();
+                    if (filePath != null) {
+                      setState(() => filepathCtrl2.text = filePath);
+                      tmpMaskedFile2 = await common.genTempFile(filePath);
+
+                      // diff button state
+                      filepath2_ok = true;
+                      if (filepath1_ok) {
+                        diffButtonDisable = true;
+                      } else {
+                        diffButtonDisable = false;
+                      }
+                    }
+                  }),
+            ],
+          ),
+          Row(children: [
+            ElevatedButton(
+              child: Text('比較'),
+              onPressed: diffButtonDisable
+                  ? null
+                  : () async {
+                      common.winmerge(tmpMaskedFile1, tmpMaskedFile2);
+                    },
+            ),
+          ])
+        ]),
+      ),
+    );
+  }
+}
+
+class Common {
+  Future<String?> getPathFromDialog() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      // withData: true,
+    );
+
+    PlatformFile file;
+    String? filePath = '';
+
+    if (result != null) {
+      file = result.files.single;
+      filePath = file.path;
+      // filePath = utf8.decode(file.bytes!);
+    }
+
+    return filePath;
+  }
+
+  Future<String> genTempFile(filePath) async {
+    File file = File(filePath);
+
+    List configs = await file.readAsLines();
+
+    List<String> tmpConfigs = [];
+
+    bool private_key = false;
+    bool cert = false;
+    configs.forEach((line) {
+      String? maskedLine = line;
+
+      // config file version
+      RegExp reg = RegExp(r'(#conf_file_ver=)(.*)$');
+      var match = reg.firstMatch(line);
+      if (match != null) {
+        maskedLine = '${match.group(1)}***************';
+      }
+
+      // Encripted words
+      reg = RegExp(
+          r'(\s+(set password ENC|set passwd ENC|set wifi-passphrase ENC|set .*key ENC|set public-key)\s)(.*)$');
+      match = reg.firstMatch(line);
+      if (match != null) {
+        maskedLine = '${match.group(1)}************************';
+      }
+
+      // uuid
+      reg = RegExp(r'(\s+(set uuid)\s)(.*)$');
+      match = reg.firstMatch(line);
+      if (match != null) {
+        maskedLine = '${match.group(1)}********-****-****-****-************';
+      }
+
+      // snmp-index
+      reg = RegExp(r'(\s+(set snmp-index)\s)(.*)$');
+      match = reg.firstMatch(line);
+      if (match != null) {
+        maskedLine = '${match.group(1)}*';
+      }
+
+      // Skip Private Key
+      if (private_key) {
+        maskedLine = null;
+        reg = RegExp(r'"');
+        match = reg.firstMatch(line);
+        if (match != null) {
+          private_key = false;
+        }
+        // Skip Cert Key
+      } else if (cert) {
+        maskedLine = null;
+        reg = RegExp(r'"');
+        match = reg.firstMatch(line);
+        if (match != null) {
+          cert = false;
+        }
+      }
+
+      // check private-key
+      reg = RegExp(r'(\s+(set private-key)\s)(.*)$');
+      match = reg.firstMatch(line);
+      if (match != null) {
+        maskedLine = '${match.group(1)} "*********"';
+        private_key = true;
+      }
+      // check cert
+      reg = RegExp(r'(\s+(set certificate)\s)(.*)$');
+      match = reg.firstMatch(line);
+      if (match != null) {
+        maskedLine = '${match.group(1)} "*********"';
+        cert = true;
+      }
+
+      // add masked config
+      if (maskedLine != null) {
+        tmpConfigs.add(maskedLine);
+      }
+    });
+
+    var tmpDir = await Directory.systemTemp.createTemp();
+
+    // 一時ファイ作成
+    int smallStart = 97;
+    int smallcount = 26;
+
+    var words = [];
+    for (var i = 0; i < 10; i++) {
+      int num = Random().nextInt(smallcount);
+      int randNum = num + smallStart;
+      words.add(String.fromCharCode(randNum));
+    }
+    String tmpFileName = words.join('');
+    String tmpFilePath;
+    tmpFilePath = '${tmpDir.path}\\${tmpFileName}';
+    print(tmpDir);
+    print(tmpFileName);
+    var tmpFile = File(tmpFilePath);
+    // 一時ファイルに書き込み
+    // コンフィグ文字列に
+    String config_str = tmpConfigs.join('\n');
+    tmpFile.writeAsString(config_str);
+
+    return tmpFile.path;
+  }
+
+  void winmerge(file1, file2) async {
+    String diff_cmd = 'WinMergeU.exe';
+    List<String> diff_opts = [
+      file1,
+      file2,
+      '-wl',
+      '-wr',
+      '-u',
+      '-e',
+      '-cp',
+      '65001',
+      '-noprefs',
+      '-ignorews',
+      '-ignoreblanklines',
+      '-ignoreeol',
+      '-ignorecodepage',
+    ];
+    var result = await Process.run(diff_cmd, diff_opts);
+  }
+}
