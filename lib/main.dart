@@ -249,15 +249,15 @@ class Common {
     var tmpFile = File(tmpFilePath);
     // 一時ファイルに書き込み
     // コンフィグ文字列に
-    String config_str = tmpConfigs.join('\n');
-    tmpFile.writeAsString(config_str);
+    String configStr = tmpConfigs.join('\n');
+    tmpFile.writeAsString(configStr);
 
     return tmpFile.path;
   }
 
   void winmerge(file1, file2) async {
-    String diff_cmd = 'WinMergeU.exe';
-    List<String> diff_opts = [
+    String diffCmd = 'WinMergeU.exe';
+    List<String> diffOpts = [
       file1,
       file2,
       '-wl',
@@ -272,6 +272,6 @@ class Common {
       '-ignoreeol',
       '-ignorecodepage',
     ];
-    var result = await Process.run(diff_cmd, diff_opts);
+    var result = await Process.run(diffCmd, diffOpts);
   }
 }
