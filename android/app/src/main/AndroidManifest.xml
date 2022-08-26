@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.fortidiff">
+    package="beer.asakusa.fortitoolz.fortidiff">
    <application
         android:label="fortidiff"
         android:name="${applicationName}"

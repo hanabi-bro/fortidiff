@@ -44,9 +44,6 @@ class _MyHomePageState extends State<MyHomePage> {
   var tmpMaskedFile1 = '';
   var tmpMaskedFile2 = '';
 
-  var filepath1_ok = false;
-  var filepath2_ok = false;
-
   bool diffButtonDisable = true;
 
   @override
@@ -74,12 +71,15 @@ class _MyHomePageState extends State<MyHomePage> {
                       setState(() => filepathCtrl1.text = filePath);
                       tmpMaskedFile1 = await common.genTempFile(filePath);
 
-                      // diff button state
-                      filepath1_ok = true;
-                      if (filepath2_ok) {
-                        diffButtonDisable = true;
+                      // file1 and file2 ok
+                      if (tmpMaskedFile2 == '') {
+                        setState(() {
+                          diffButtonDisable = true;
+                        });
                       } else {
-                        diffButtonDisable = false;
+                        setState(() {
+                          diffButtonDisable = false;
+                        });
                       }
                     }
                   }),
@@ -100,12 +100,15 @@ class _MyHomePageState extends State<MyHomePage> {
                       setState(() => filepathCtrl2.text = filePath);
                       tmpMaskedFile2 = await common.genTempFile(filePath);
 
-                      // diff button state
-                      filepath2_ok = true;
-                      if (filepath1_ok) {
-                        diffButtonDisable = true;
+                      // file1 and file2 ok
+                      if (tmpMaskedFile1 == '') {
+                        setState(() {
+                          diffButtonDisable = true;
+                        });
                       } else {
-                        diffButtonDisable = false;
+                        setState(() {
+                          diffButtonDisable = false;
+                        });
                       }
                     }
                   }),
@@ -241,8 +244,8 @@ class Common {
     String tmpFileName = words.join('');
     String tmpFilePath;
     tmpFilePath = '${tmpDir.path}\\${tmpFileName}';
-    print(tmpDir);
-    print(tmpFileName);
+    // print(tmpDir);
+    // print(tmpFileName);
     var tmpFile = File(tmpFilePath);
     // 一時ファイルに書き込み
     // コンフィグ文字列に
