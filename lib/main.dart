@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'dart:math';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'dart:convert';
+import 'package:desktop_window/desktop_window.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,9 +18,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Forti Diff',
       theme: ThemeData.dark(),
       home: const MyHomePage(title: 'Forti Diff'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
     );
   }
 }
@@ -53,19 +58,18 @@ class _MyHomePageState extends State<MyHomePage> {
           title: Text(widget.title),
         ),
         body: Column(children: [
-          Text('Top'),
+          Text(AppLocalizations.of(context)!.topMessage),
           Row(
             children: [
-              Text('比較元'),
+              Text(AppLocalizations.of(context)!.file1),
               Flexible(
                   child: TextField(
                 controller: filepathCtrl1,
               )),
               ElevatedButton(
-                  child: Text('Button'),
+                  child: Text(AppLocalizations.of(context)!.browse),
                   onPressed: () async {
                     String? filePath = await common.getPathFromDialog();
-                    print(filePath);
                     if (filePath != null) {
                       setState(() => filepathCtrl1.text = filePath);
                       tmpMaskedFile1 = await common.genTempFile(filePath);
@@ -83,13 +87,13 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           Row(
             children: [
-              Text('比較対象'),
+              Text(AppLocalizations.of(context)!.file2),
               Flexible(
                   child: TextField(
                 controller: filepathCtrl2,
               )),
               ElevatedButton(
-                  child: Text('Button'),
+                  child: Text(AppLocalizations.of(context)!.browse),
                   onPressed: () async {
                     String? filePath = await common.getPathFromDialog();
                     if (filePath != null) {
@@ -109,7 +113,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           Row(children: [
             ElevatedButton(
-              child: Text('比較'),
+              child: Text(AppLocalizations.of(context)!.diff),
               onPressed: diffButtonDisable
                   ? null
                   : () async {
