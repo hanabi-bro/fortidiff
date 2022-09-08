@@ -170,7 +170,7 @@ class Common {
 
       // Encripted words
       reg = RegExp(
-          r'(\s+(set password ENC|set passwd ENC|set wifi-passphrase ENC|set .*key ENC|set public-key)\s)(.*)$');
+          r'(\s+(set password[\d]? ENC|set passwd[\d]? ENC|set wifi-passphrase ENC|set .*key ENC|set public-key|set md5-key|set psksecret ENC)\s)(.*)$');
       match = reg.firstMatch(line);
       if (match != null) {
         maskedLine = '${match.group(1)}************************';
