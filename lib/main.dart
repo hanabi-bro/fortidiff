@@ -6,6 +6,12 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'dart:convert';
 import 'package:desktop_window/desktop_window.dart';
+import 'package:logger/logger.dart';
+import 'package:flutter/rendering.dart';
+
+var logger = Logger(
+  printer: PrettyPrinter(),
+);
 
 void main() {
   runApp(const MyApp());
@@ -65,28 +71,32 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: TextField(
                 controller: filepathCtrl1,
               )),
-              ElevatedButton(
-                  child: Text(AppLocalizations.of(context)!.browse),
-                  onPressed: () async {
-                    setState(() => file1SelectDisable = true);
-                    String? filePath = await common.getPathFromDialog();
-                    if (filePath != null && filePath != "") {
-                      setState(() => filepathCtrl1.text = filePath);
-                      tmpMaskedFile1 = await common.genTempFile(filePath);
+              LazyFutureBuilder(
+                futureBuilder: () async {
+                  // 何らかの時間のかかる処理
+                  String? filePath = await common.getPathFromDialog();
+                  if (filePath != null && filePath != "") {
+                    setState(() => filepathCtrl1.text = filePath);
+                    tmpMaskedFile1 = await common.genTempFile(filePath);
 
-                      // file1 and file2 ok
-                      if (tmpMaskedFile2 == '') {
-                        setState(() {
-                          diffButtonDisable = true;
-                        });
-                      } else {
-                        setState(() {
-                          diffButtonDisable = false;
-                        });
-                      }
+                    // file1 and file2 ok
+                    if (tmpMaskedFile2 == '') {
+                      setState(() {
+                        diffButtonDisable = true;
+                      });
+                    } else {
+                      setState(() {
+                        diffButtonDisable = false;
+                      });
                     }
-                    setState(() => file1SelectDisable = false);
-                  }),
+                  }
+                },
+                builder: (context, futureBuilder, isFutureBuilding) =>
+                    RaisedButton(
+                  onPressed: futureBuilder,
+                  child: Text('browse'),
+                ),
+              ),
             ],
           ),
           Row(
@@ -96,26 +106,31 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: TextField(
                 controller: filepathCtrl2,
               )),
-              ElevatedButton(
-                  child: Text(AppLocalizations.of(context)!.browse),
-                  onPressed: () async {
-                    String? filePath = await common.getPathFromDialog();
-                    if (filePath != null && filePath != "") {
-                      setState(() => filepathCtrl2.text = filePath);
-                      tmpMaskedFile2 = await common.genTempFile(filePath);
+              LazyFutureBuilder(
+                futureBuilder: () async {
+                  String? filePath = await common.getPathFromDialog();
+                  if (filePath != null && filePath != "") {
+                    setState(() => filepathCtrl2.text = filePath);
+                    tmpMaskedFile2 = await common.genTempFile(filePath);
 
-                      // file1 and file2 ok
-                      if (tmpMaskedFile1 == '') {
-                        setState(() {
-                          diffButtonDisable = true;
-                        });
-                      } else {
-                        setState(() {
-                          diffButtonDisable = false;
-                        });
-                      }
+                    // file1 and file2 ok
+                    if (tmpMaskedFile1 == '') {
+                      setState(() {
+                        diffButtonDisable = true;
+                      });
+                    } else {
+                      setState(() {
+                        diffButtonDisable = false;
+                      });
                     }
-                  }),
+                  }
+                },
+                builder: (context, futureBuilder, isFutureBuilding) =>
+                    RaisedButton(
+                  onPressed: futureBuilder,
+                  child: Text('browse'),
+                ),
+              ),
             ],
           ),
           Row(children: [
@@ -277,5 +292,46 @@ class Common {
       '-ignorecodepage',
     ];
     var result = await Process.run(diffCmd, diffOpts);
+  }
+}
+
+class LazyFutureBuilder extends StatefulWidget {
+  final Future Function() futureBuilder;
+  final Widget Function(BuildContext context, Future Function() futureBuilder,
+      bool isFutureBuilding) builder;
+
+  const LazyFutureBuilder({
+    required this.futureBuilder,
+    required this.builder,
+  });
+
+  @override
+  State<StatefulWidget> createState() => _State();
+}
+
+class _State extends State<LazyFutureBuilder> {
+  var _isFutureBuilding = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.builder(
+      context,
+      () async {
+        if (_isFutureBuilding) {
+          return;
+        }
+        setState(() {
+          _isFutureBuilding = true;
+        });
+        try {
+          await widget.futureBuilder();
+        } finally {
+          setState(() {
+            _isFutureBuilding = false;
+          });
+        }
+      },
+      _isFutureBuilding,
+    );
   }
 }
