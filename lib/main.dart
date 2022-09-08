@@ -45,6 +45,8 @@ class _MyHomePageState extends State<MyHomePage> {
   var tmpMaskedFile2 = '';
 
   bool diffButtonDisable = true;
+  bool file1SelectDisable = false;
+  bool file2SelectDisable = false;
 
   @override
   Widget build(BuildContext context) {
@@ -66,8 +68,9 @@ class _MyHomePageState extends State<MyHomePage> {
               ElevatedButton(
                   child: Text(AppLocalizations.of(context)!.browse),
                   onPressed: () async {
+                    setState(() => file1SelectDisable = true);
                     String? filePath = await common.getPathFromDialog();
-                    if (filePath != null) {
+                    if (filePath != null && filePath != "") {
                       setState(() => filepathCtrl1.text = filePath);
                       tmpMaskedFile1 = await common.genTempFile(filePath);
 
@@ -82,6 +85,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         });
                       }
                     }
+                    setState(() => file1SelectDisable = false);
                   }),
             ],
           ),
@@ -96,7 +100,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Text(AppLocalizations.of(context)!.browse),
                   onPressed: () async {
                     String? filePath = await common.getPathFromDialog();
-                    if (filePath != null) {
+                    if (filePath != null && filePath != "") {
                       setState(() => filepathCtrl2.text = filePath);
                       tmpMaskedFile2 = await common.genTempFile(filePath);
 
