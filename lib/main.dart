@@ -46,6 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
   var common = Common();
   var filepathCtrl1 = TextEditingController();
   var filepathCtrl2 = TextEditingController();
+  var outputCtr = TextEditingController();
 
   var tmpMaskedFile1 = '';
   var tmpMaskedFile2 = '';
@@ -53,6 +54,11 @@ class _MyHomePageState extends State<MyHomePage> {
   bool diffButtonDisable = true;
   bool file1SelectDisable = false;
   bool file2SelectDisable = false;
+
+  Map<String, String> errMessage = {
+    'file1': '',
+    'file2': '',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -73,21 +79,34 @@ class _MyHomePageState extends State<MyHomePage> {
               )),
               LazyFutureBuilder(
                 futureBuilder: () async {
-                  // 何らかの時間のかかる処理
                   String? filePath = await common.getPathFromDialog();
                   if (filePath != null && filePath != "") {
                     setState(() => filepathCtrl1.text = filePath);
-                    tmpMaskedFile1 = await common.genTempFile(filePath);
-
-                    // file1 and file2 ok
-                    if (tmpMaskedFile2 == '') {
-                      setState(() {
-                        diffButtonDisable = true;
-                      });
+                    Map check_configs = await common.getConfig(filePath);
+                    if (check_configs['message'].length > 0) {
+                      errMessage['file1'] =
+                          "File1: ${check_configs['message']}";
+                      setState(() => outputCtr.text =
+                          "${errMessage['file1']}\n${errMessage['file2']}");
                     } else {
-                      setState(() {
-                        diffButtonDisable = false;
-                      });
+                      errMessage['file1'] = "";
+                      setState(() => outputCtr.text =
+                          "${errMessage['file1']}\n${errMessage['file2']}");
+                      tmpMaskedFile2 =
+                          await common.genTempFile(check_configs['configs']);
+                      // file1 and file2 ok
+                      if (tmpMaskedFile1 != "" &&
+                          tmpMaskedFile2 != "" &&
+                          errMessage['file1'] == "" &&
+                          errMessage['file2'] == "") {
+                        setState(() {
+                          diffButtonDisable = false;
+                        });
+                      } else {
+                        setState(() {
+                          diffButtonDisable = true;
+                        });
+                      }
                     }
                   }
                 },
@@ -111,17 +130,31 @@ class _MyHomePageState extends State<MyHomePage> {
                   String? filePath = await common.getPathFromDialog();
                   if (filePath != null && filePath != "") {
                     setState(() => filepathCtrl2.text = filePath);
-                    tmpMaskedFile2 = await common.genTempFile(filePath);
-
-                    // file1 and file2 ok
-                    if (tmpMaskedFile1 == '') {
-                      setState(() {
-                        diffButtonDisable = true;
-                      });
+                    Map check_configs = await common.getConfig(filePath);
+                    if (check_configs['message'].length > 0) {
+                      errMessage['file2'] =
+                          "File2: ${check_configs['message']}";
+                      setState(() => outputCtr.text =
+                          "${errMessage['file1']}\n${errMessage['file2']}");
                     } else {
-                      setState(() {
-                        diffButtonDisable = false;
-                      });
+                      errMessage['file2'] = "";
+                      setState(() => outputCtr.text =
+                          "${errMessage['file1']}\n${errMessage['file2']}");
+                      tmpMaskedFile1 =
+                          await common.genTempFile(check_configs['configs']);
+                      // file1 and file2 ok
+                      if (tmpMaskedFile1 != "" &&
+                          tmpMaskedFile2 != "" &&
+                          errMessage['file1'] == "" &&
+                          errMessage['file2'] == "") {
+                        setState(() {
+                          diffButtonDisable = false;
+                        });
+                      } else {
+                        setState(() {
+                          diffButtonDisable = true;
+                        });
+                      }
                     }
                   }
                 },
@@ -142,7 +175,16 @@ class _MyHomePageState extends State<MyHomePage> {
                       common.winmerge(tmpMaskedFile1, tmpMaskedFile2);
                     },
             ),
-          ])
+          ]),
+          Row(children: [
+            Flexible(
+                child: TextField(
+              keyboardType: TextInputType.multiline,
+              maxLines: null,
+              minLines: 3,
+              controller: outputCtr,
+            )),
+          ]),
         ]),
       ),
     );
@@ -168,13 +210,28 @@ class Common {
     return filePath;
   }
 
-  Future<String> genTempFile(filePath) async {
+  Future<Map> getConfig(filePath) async {
     File file = File(filePath);
+    Map result = {'message': "", 'configs': []};
 
-    List configs = await file.readAsLines();
+    try {
+      result['configs'] = await file.readAsLines();
+    } on FileSystemException catch (e, stacktrace) {
+      RegExp notUtf8 = RegExp(r"Failed to decode data using encoding 'utf-8'");
+      if (e.message.contains(notUtf8)) {
+        result['message'] = 'File is not utf-8[$filePath]';
+      } else {
+        result['message'] = e.message;
+      }
+    } on Exception catch (e, stacktrace) {
+      result['message'] = stacktrace;
+    }
 
+    return result;
+  }
+
+  Future<String> genTempFile(List configs) async {
     List<String> tmpConfigs = [];
-
     bool private_key = false;
     bool cert = false;
     configs.forEach((line) {
