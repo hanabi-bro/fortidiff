@@ -185,6 +185,7 @@ class _MyHomePageState extends State<MyHomePage> {
               readOnly: true,
               showCursor: true,
               controller: outputCtr,
+              style: TextStyle(color: Colors.red),
             )),
           ]),
         ]),
