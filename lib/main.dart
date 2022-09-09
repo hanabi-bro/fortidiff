@@ -182,6 +182,8 @@ class _MyHomePageState extends State<MyHomePage> {
               keyboardType: TextInputType.multiline,
               maxLines: null,
               minLines: 3,
+              readOnly: true,
+              showCursor: true,
               controller: outputCtr,
             )),
           ]),
