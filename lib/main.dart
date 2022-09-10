@@ -60,6 +60,14 @@ class _MyHomePageState extends State<MyHomePage> {
     'file2': '',
   };
 
+  void initState() {
+    defaultWindowSize();
+  }
+
+  defaultWindowSize() async {
+    await DesktopWindow.setWindowSize(Size(1280, 1280));
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
