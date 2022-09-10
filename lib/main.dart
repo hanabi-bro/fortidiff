@@ -116,13 +116,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: Text('browse'),
                 ),
               ),
-                },
-                builder: (context, futureBuilder, isFutureBuilding) =>
-                    ElevatedButton(
-                  onPressed: futureBuilder,
-                  child: Text('browse'),
-                ),
-              ),
             ],
           ),
           Row(
@@ -164,13 +157,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       }
                     }
                   }
-                },
-                builder: (context, futureBuilder, isFutureBuilding) =>
-                    ElevatedButton(
-                  onPressed: futureBuilder,
-                  child: Text('browse'),
-                ),
-              ),
                 },
                 builder: (context, futureBuilder, isFutureBuilding) =>
                     ElevatedButton(
