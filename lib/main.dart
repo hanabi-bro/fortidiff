@@ -64,6 +64,11 @@ class _MyHomePageState extends State<MyHomePage> {
     defaultWindowSize();
   }
 
+  void dispose() {
+    print('hoge');
+    super.dispose();
+  }
+
   defaultWindowSize() async {
     await DesktopWindow.setWindowSize(Size(1280, 1280));
   }
@@ -100,7 +105,16 @@ class _MyHomePageState extends State<MyHomePage> {
                       errMessage['file1'] = "";
                       setState(() => outputCtr.text =
                           "${errMessage['file1']}\n${errMessage['file2']}");
-                      tmpMaskedFile2 =
+
+                      // 前回の添添付ファイルあったら消す
+                      try {
+                        File tmpFile1Obj = File(tmpMaskedFile1);
+                        bool tmpFile1Exist = tmpFile1Obj.existsSync();
+                        if (tmpFile1Exist) {
+                          tmpFile1Obj.delete();
+                        }
+                      } catch (e) {}
+                      tmpMaskedFile1 =
                           await common.genTempFile(check_configs['configs']);
                       // file1 and file2 ok
                       if (tmpMaskedFile1 != "" &&
@@ -148,7 +162,16 @@ class _MyHomePageState extends State<MyHomePage> {
                       errMessage['file2'] = "";
                       setState(() => outputCtr.text =
                           "${errMessage['file1']}\n${errMessage['file2']}");
-                      tmpMaskedFile1 =
+
+                      // 前回の添添付ファイルあったら消す
+                      try {
+                        File tmpFile2Obj = File(tmpMaskedFile2);
+                        bool tmpFile2Exist = tmpFile2Obj.existsSync();
+                        if (tmpFile2Exist) {
+                          tmpFile2Obj.delete();
+                        }
+                      } catch (e) {}
+                      tmpMaskedFile2 =
                           await common.genTempFile(check_configs['configs']);
                       // file1 and file2 ok
                       if (tmpMaskedFile1 != "" &&
