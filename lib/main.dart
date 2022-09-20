@@ -278,9 +278,17 @@ class Common {
         maskedLine = '${match.group(1)}***************';
       }
 
+      // Encripted key
+      // reg = RegExp(r'(\s+(set [md5-|*]key [\d+]? ENC)\s)(.*)$');
+      // match = reg.firstMatch(line);
+      // if (match != null) {
+      //   maskedLine = '${match.group(1)}************************"';
+      // }
+
       // Encripted words
-      reg = RegExp(
-          r'(\s+(set password[\d]? ENC|set passwd[\d]? ENC|set wifi-passphrase ENC|set .*key ENC|set public-key|set md5-key|set psksecret ENC)\s)(.*)$');
+      // reg = RegExp(
+      //     r'(\s+(set password[\d]? ENC|set passwd[\d]? ENC|set wifi-passphrase ENC|set .*key ENC|set public-key|set md5-key|set psksecret ENC)\s)(.*)$');
+      reg = RegExp(r'(\s+(set .* ["]?ENC)\s)(.*)$');
       match = reg.firstMatch(line);
       if (match != null) {
         maskedLine = '${match.group(1)}************************';
